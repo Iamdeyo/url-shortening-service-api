@@ -1,24 +1,35 @@
-FROM richarvey/nginx-php-fpm:1.7.2
+# Use official PHP with FPM
+FROM php:8.2-fpm
 
-WORKDIR /var/www/html
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zip \
+    git \
+    curl \
+    unzip \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Copy app files
+# Set working directory
+WORKDIR /var/www
+
+# Copy files
 COPY . .
 
-# Install composer dependencies during build
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Install PHP deps
 RUN composer install --no-dev --optimize-autoloader
 
-# Cache Laravel config & routes
+# Laravel setup
 RUN php artisan config:cache && \
     php artisan route:cache && \
     php artisan migrate --force --seed
 
-# Image config
-ENV WEBROOT /var/www/html/public
-ENV PHP_ERRORS_STDERR 1
-ENV RUN_SCRIPTS 0
-ENV REAL_IP_HEADER 1
-ENV APP_ENV production
-ENV APP_DEBUG false
-ENV LOG_CHANNEL stderr
-ENV COMPOSER_ALLOW_SUPERUSER 1
+CMD ["php-fpm"]
