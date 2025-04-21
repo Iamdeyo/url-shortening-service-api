@@ -2,8 +2,7 @@
 
 echo "Running composer"
 cd /var/www/html
-composer global require hirak/prestissimo
-composer install --no-dev
+composer install --no-dev --optimize-autoloader
 
 echo "Caching config..."
 php artisan config:cache
@@ -11,5 +10,8 @@ php artisan config:cache
 echo "Caching routes..."
 php artisan route:cache
 
-echo "Running migrations and seeding data..."
-php artisan migrate --force --seed
+echo "Running migrations..."
+php artisan migrate --force
+
+# Keep the container running
+exec "php-fpm"
